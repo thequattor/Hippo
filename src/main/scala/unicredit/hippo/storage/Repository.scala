@@ -10,8 +10,8 @@ import Scalaz._
 import sharding.Shard
 
 
-class Repository(table: String, partitions: Int, version: String) {
-  private val shard = new Shard(table, partitions, version)
+class Repository(home: String, table: String, partitions: Int, version: String) {
+  private val shard = new Shard(home, table, partitions, version)
   private val joiner = new TrivialJoiner("𐒉") // OSMANYA LETTER SHIIN (10489)
 
   private def uri(key: String) =

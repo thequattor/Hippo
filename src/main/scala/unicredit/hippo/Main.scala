@@ -1,6 +1,7 @@
 package unicredit.hippo
 
 import akka.actor.{ ActorSystem, Props }
+import com.typesafe.config.ConfigFactory
 
 import actors.Retriever
 
@@ -13,8 +14,15 @@ object Main extends App {
   //   repo.write("ferrets", Map("name" -> "Andrea", "surname" -> "Ferretti", "age" -> "33"))
   //   repo.write("pazqo", Map("name" -> "Stefano", "surname" -> "Pascolutti"))
   // }
+  private val config = ConfigFactory.load
+  private val partitions = config getInt "storage.partitions"
+  private val home = config getString "storage.home"
+
   val system = ActorSystem("hippo")
-  val retriever = system.actorOf(Props(new Retriever(12)), name = "retriever")
+  val retriever = system.actorOf(
+    Props(new Retriever(home, partitions)),
+    name = "retriever"
+  )
 
   ////////////////
   import system.dispatcher
