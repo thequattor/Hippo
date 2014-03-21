@@ -14,8 +14,22 @@ object Main extends App {
   //   repo.write("pazqo", Map("name" -> "Stefano", "surname" -> "Pascolutti"))
   // }
   val system = ActorSystem("hippo")
-  val retriever = system.actorOf(Props[Retriever], name = "retriever")
+  val retriever = system.actorOf(Props(new Retriever(12)), name = "retriever")
 
+  ////////////////
+  import system.dispatcher
+  import scala.concurrent.duration._
+  import akka.pattern.ask
+  import akka.util.Timeout
+  import messages.{ Retrieve, Result }
+  implicit val timeout = Timeout(10 seconds)
+
+  val request = Retrieve("people", List("ferrets", "pazqo"), List("name"))
+
+  (retriever ? request).mapTo[Result] onSuccess {
+    case Result(content) => println(content)
+  }
+  ////////////////
 
   readLine("Press <Enter> to shutdown...")
   system.shutdown
