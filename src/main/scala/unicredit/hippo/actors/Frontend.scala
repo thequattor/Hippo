@@ -30,6 +30,8 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   override def preStart() = cluster.subscribe(self, classOf[MemberUp])
   override def postStop() = cluster.unsubscribe(self)
 
+  val emptyFuture = Future.failed(new Exception("No future completed"))
+
   def receive = {
     // Membership messages
     case MemberUp(member) ⇒
@@ -49,9 +51,12 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       val results = keys map { key =>
         val message = Retrieve(table, List(key), columns)
         val remotes = shard.indicesFor(key, siblings.keySet.toSeq, replicas).toStream
-        // Changed this with a proper implementation of streams
-        // that does not force its first element
-        val lazyRequests = remotes map { id => siblings(id) ? message }
+        // Change this with a proper implementation of streams
+        // that does not force its first element.
+        // Right now we just insert a dummy element at the head
+        // of the stream to avoid firing a remore request if
+        // it is not needed.
+        val lazyRequests = emptyFuture #:: (remotes map { id => siblings(id) ? message })
 
         if (remotes contains id) { self ? message }
         else firstOf(lazyRequests)
@@ -60,13 +65,15 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       retriever ? m pipeTo sender
   }
 
-
   def firstOf[A](futures: => Stream[Future[A]]): Future[A] = futures match {
-    case Stream() => Future.failed(new Exception("No future completed"))
+    case Stream() => emptyFuture
+    // One may think to match h #:: t, but this would eagerly
+    // evaluate the head of t, firing one more request than
+    // needed.
+    case stream => stream.head recoverWith { case _: Throwable => firstOf(stream.tail) }
     // Unfortunately, Future#fallbackTo evaluates its argument
     // eagerly, and this would force us to spawn more requests
-    // than needed.
-    case h #:: t => h recoverWith { case _: Throwable => firstOf(t) }
+    // than needed. Hence the use of Future#recoverWith
   }
 
   def siblingActor(member: Member) = {
