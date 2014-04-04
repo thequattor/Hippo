@@ -15,12 +15,12 @@ import messages.{ Request, Retrieve, IdentifyTo, MyIdIs }
 
 class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   private val config = ConfigFactory.load
-  private val tms = config getLong "request.timeout_in_s"
+  private val id = config getString "storage.local-id"
+  private val tms = config getLong "request.timeout-in-s"
   implicit val timeout = Timeout(tms seconds)
   import context.dispatcher
 
   val cluster = Cluster(context.system)
-  val id = "pippo"
   var siblings = Map.empty[ActorRef, String]
 
   override def preStart() = cluster.subscribe(self, classOf[MemberUp])
