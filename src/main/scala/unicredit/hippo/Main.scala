@@ -3,7 +3,7 @@ package unicredit.hippo
 import akka.actor.{ ActorSystem, Props }
 import com.typesafe.config.ConfigFactory
 
-import actors.Retriever
+import actors._
 
 
 object Main extends App {
@@ -22,6 +22,10 @@ object Main extends App {
   val retriever = system.actorOf(
     Props(new Retriever(home, partitions)),
     name = "retriever"
+  )
+  val frontend = system.actorOf(
+    Props(new Frontend(retriever)),
+    name = "frontend"
   )
 
   ////////////////
