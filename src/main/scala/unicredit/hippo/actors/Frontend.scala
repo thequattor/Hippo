@@ -10,8 +10,9 @@ import akka.cluster.ClusterEvent._
 import akka.pattern.{ ask, pipe }
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
+import scalaz.Scalaz._
 
-import messages.{ Request, Retrieve, IdentifyTo, MyIdIs }
+import messages._
 import sharding.RemoteShard
 
 
@@ -48,6 +49,12 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       siblings = siblings filterNot { case (_, a) => a == actor }
     // Actual request messages
     case Request(table, keys, columns) ⇒
+      // We make a separate request for each key. This is less
+      // efficient than grouping the keys by shard and issuing
+      // a single request to each server, but it has the advantage
+      // that it is very easy to deal with failures by looking for
+      // the key in the next shard. Implementation may change in the
+      // future if this becomes a performance issue.
       val results = keys map { key =>
         val message = Retrieve(table, List(key), columns)
         val remotes = shard.indicesFor(key, siblings.keySet.toSeq, replicas).toStream
@@ -57,10 +64,12 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
         // of the stream to avoid firing a remore request if
         // it is not needed.
         val lazyRequests = emptyFuture #:: (remotes map { id => siblings(id) ? message })
+        val future = if (remotes contains id) { self ? message } else firstOf(lazyRequests)
 
-        if (remotes contains id) { self ? message }
-        else firstOf(lazyRequests)
+        future.mapTo[Result]
       }
+
+      Future.sequence(results) map accumulate pipeTo sender
     case m: Retrieve ⇒
       retriever ? m pipeTo sender
   }
@@ -81,4 +90,9 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
 
     context.actorSelection(path)
   }
+
+  def accumulate(results: Iterable[Result]) =
+    results.foldLeft(Result(Map())) { case (Result(m1), Result(m2)) =>
+      Result(m1 |+| m2)
+    }
 }
