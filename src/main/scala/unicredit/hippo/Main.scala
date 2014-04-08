@@ -1,6 +1,8 @@
 package unicredit.hippo
 
 import akka.actor.{ ActorSystem, Props }
+import akka.io.IO
+import spray.can.Http
 import com.typesafe.config.ConfigFactory
 
 import actors._
@@ -11,6 +13,8 @@ object Main extends App {
   private val config = ConfigFactory.load
   private val partitions = config getInt "storage.partitions"
   private val home = config getString "storage.home"
+  private val host = config getString "http.hostname"
+  private val port = config getInt "http.port"
   // val repo = new Repository(home, "people", 12, "abcd123")
   // def write = {
   //   repo.write("firry", Map("name" -> "Marco", "surname" -> "Firrincieli"))
@@ -18,7 +22,7 @@ object Main extends App {
   //   repo.write("pazqo", Map("name" -> "Stefano", "surname" -> "Pascolutti"))
   // }
 
-  val system = ActorSystem("hippo")
+  implicit val system = ActorSystem("hippo")
   val retriever = system.actorOf(
     Props(new Retriever(home, partitions)),
     name = "retriever"
@@ -27,21 +31,12 @@ object Main extends App {
     Props(new Frontend(retriever)),
     name = "frontend"
   )
+  val http = system.actorOf(
+    Props(new HttpGate(frontend)),
+    name = "http"
+  )
 
-  ////////////////
-  import system.dispatcher
-  import scala.concurrent.duration._
-  import akka.pattern.ask
-  import akka.util.Timeout
-  import messages.{ Retrieve, Result }
-  implicit val timeout = Timeout(10 seconds)
-
-  val request = Retrieve("people", List("ferrets", "pazqo"), List("name"))
-
-  (retriever ? request).mapTo[Result] onSuccess {
-    case Result(content) => println(content)
-  }
-  ////////////////
+  IO(Http) ! Http.Bind(http, interface = host, port = port)
 
   readLine("Press <Enter> to shutdown...")
   system.shutdown

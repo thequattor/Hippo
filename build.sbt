@@ -20,5 +20,8 @@ libraryDependencies ++= Seq(
   "org.scalaz" %% "scalaz-core" % "7.0.6",
   "com.typesafe.akka" %% "akka-actor" % "2.3.1",
   "com.typesafe.akka" %% "akka-cluster" % "2.3.1",
-  "com.roundeights" %% "hasher" % "1.0.0"
+  "com.roundeights" %% "hasher" % "1.0.0",
+  "io.spray" % "spray-can" % "1.3.1",
+  "io.spray" % "spray-routing" % "1.3.1",
+  "org.json4s" %% "json4s-jackson" % "3.2.8"
 )
