@@ -37,7 +37,4 @@ object Main extends App {
   )
 
   IO(Http) ! Http.Bind(http, interface = host, port = port)
-
-  readLine("Press <Enter> to shutdown...")
-  system.shutdown
 }

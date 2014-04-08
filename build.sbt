@@ -8,6 +8,7 @@ scalaVersion := "2.10.3"
 
 scalacOptions ++= Seq("-deprecation", "-feature", "-language:postfixOps")
 
+Revolver.settings
 
 resolvers ++= Seq(
   "Cloudera releases" at "https://repository.cloudera.com/artifactory/libs-release",
