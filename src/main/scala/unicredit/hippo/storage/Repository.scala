@@ -3,7 +3,6 @@ package storage
 
 import scala.util.control.Exception.allCatch
 
-import org.apache.hadoop.fs.Path
 import scalaz._
 import Scalaz._
 
@@ -14,8 +13,7 @@ class Repository(home: String, table: String, partitions: Int, version: String) 
   private val shard = new Shard(home, table, partitions, version)
   private val joiner = new TrivialJoiner("𐒉") // OSMANYA LETTER SHIIN (10489)
 
-  private def uri(key: String) =
-    new Path(shard.uriForKey(key)).toString
+  private def uri(key: String) = shard.uriForKey(key)
 
   private def accumulate[A, B](maps: Iterable[Map[A, Map[B, String]]]) =
     maps.foldLeft(Map.empty[A, Map[B, String]]) (_ |+| _)
@@ -25,11 +23,6 @@ class Repository(home: String, table: String, partitions: Int, version: String) 
       val (k, c) = joiner.split(key)
       Map(k -> Map(c -> value))
     }
-
-  def write(key: String, data: Map[String, String]) =
-    new IO(uri(key)) write (data map { case (col, value) =>
-      joiner.join(key, col) -> value
-    })
 
   def read(keys: Seq[String], columns: Seq[String]) = {
     val shards = keys groupBy uri map { case (path, ks) =>
