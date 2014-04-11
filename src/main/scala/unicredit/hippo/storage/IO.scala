@@ -16,8 +16,9 @@ class IO(path: String) {
       val key = new Text(k)
       val value = new Text
 
-      reader.get(key, value)
-      result += (k -> value.toString)
+      if (reader.get(key, value) != null) {
+        result += (k -> value.toString)
+      }
     }
     IOUtils.closeStream(reader)
 
