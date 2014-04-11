@@ -59,6 +59,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       val results = keys map { key =>
         val message = Retrieve(table, List(key), columns)
         val remotes = shard.indicesFor(key, siblings.keySet.toSeq, replicas).toStream
+        log.info(s"Key $key is available on ${ shard.indicesFor(key, siblings.keySet.toSeq, replicas) }")
         // Change this with a proper implementation of streams
         // that does not force its first element.
         // Right now we just insert a dummy element at the head
