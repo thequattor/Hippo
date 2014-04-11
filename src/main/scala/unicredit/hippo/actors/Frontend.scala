@@ -31,10 +31,16 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   override def preStart() = cluster.subscribe(self, classOf[MemberUp])
   override def postStop() = cluster.unsubscribe(self)
 
-  val emptyFuture = Future.failed(new Exception("No future completed"))
+  val failedFuture = Future.failed(new Exception("No future completed"))
+
+  // Puts id in front of other indices, if present
+  private def sort(indices: List[String]) =
+    if (indices contains id) id :: indices.filterNot(id ==)
+    else indices
 
   def receive = {
     // Membership messages
+    //********************
     case MemberUp(member) ⇒
       log.info(s"Recognized new member $member")
       val frontend = siblingActor(member)
@@ -47,8 +53,8 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
     case Terminated(actor) ⇒
       log.info(s"Lost contact with actor $actor")
       siblings = siblings filterNot { case (_, a) => a == actor }
-      log.info(s"Siblings are now ${ siblings.keySet }")
     // Actual request messages
+    //************************
     case Request(table, keys, columns) ⇒
       // We make a separate request for each key. This is less
       // efficient than grouping the keys by shard and issuing
@@ -58,20 +64,21 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       // future if this becomes a performance issue.
       val results = keys map { key =>
         val message = Retrieve(table, List(key), columns)
-        val remotes = shard.indicesFor(key, siblings.keySet.toSeq, replicas).toStream
-        log.info(s"Key $key is available on ${ shard.indicesFor(key, siblings.keySet.toSeq, replicas) }")
+        // Remotes are sorted so that the local server is put first, if present
+        val remotes = sort(shard.indicesFor(key, siblings.keySet.toSeq, replicas)).toStream
         // Change this with a proper implementation of streams
         // that does not force its first element.
         // Right now we just insert a dummy element at the head
         // of the stream to avoid firing a remore request if
         // it is not needed.
-        val lazyRequests = emptyFuture #:: (remotes map { id =>
+        val lazyRequests = failedFuture #:: (remotes map { id =>
           log.info(s"Sending request to $id for key $key")
-          siblings(id) ? message
+          // If the result set is empty, the key was not found,
+          // and we should count this as a failed request
+          (siblings(id) ? message).mapTo[Result] filter (! _.content.isEmpty)
         })
-        val future = if (remotes contains id) { self ? message } else firstOf(lazyRequests)
 
-        future.mapTo[Result]
+        firstOf(lazyRequests)(df = Result(Map()))
       }
 
       Future.sequence(results) map accumulate pipeTo sender
@@ -79,8 +86,8 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       retriever ? m pipeTo sender
   }
 
-  def firstOf[A](futures: => Stream[Future[A]]): Future[A] = futures match {
-    case Stream() => emptyFuture
+  def firstOf[A](futures: => Stream[Future[A]])(implicit df: A): Future[A] = futures match {
+    case Stream() => Future(df)
     // One may think to match h #:: t, but this would eagerly
     // evaluate the head of t, firing one more request than
     // needed.

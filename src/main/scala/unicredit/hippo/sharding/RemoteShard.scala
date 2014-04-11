@@ -9,5 +9,5 @@ class RemoteShard {
   def hash(s: String) = s.md5.hex
 
   def indicesFor(key: String, indices: Seq[String], n: Int) =
-    indices.sortBy({ i => hash(key + i) })(order) take n
+    indices.sortBy({ i => hash(key + i) })(order) take n toList
 }
