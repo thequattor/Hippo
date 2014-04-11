@@ -47,6 +47,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
     case Terminated(actor) ⇒
       log.info(s"Lost contact with actor $actor")
       siblings = siblings filterNot { case (_, a) => a == actor }
+      log.debug(s"Siblings are now ${ siblings.keySet }")
     // Actual request messages
     case Request(table, keys, columns) ⇒
       // We make a separate request for each key. This is less
@@ -63,7 +64,10 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
         // Right now we just insert a dummy element at the head
         // of the stream to avoid firing a remore request if
         // it is not needed.
-        val lazyRequests = emptyFuture #:: (remotes map { id => siblings(id) ? message })
+        val lazyRequests = emptyFuture #:: (remotes map { id =>
+          log.debug(s"Sending request to $id for key $key")
+          siblings(id) ? message
+        })
         val future = if (remotes contains id) { self ? message } else firstOf(lazyRequests)
 
         future.mapTo[Result]

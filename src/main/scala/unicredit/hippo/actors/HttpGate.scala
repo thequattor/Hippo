@@ -3,7 +3,7 @@ package actors
 
 import scala.concurrent.duration._
 
-import akka.actor.{ Actor, ActorRef }
+import akka.actor.{ Actor, ActorRef, ActorLogging }
 import akka.util.Timeout
 import akka.pattern.ask
 import spray.routing.HttpService
@@ -23,7 +23,7 @@ object Support extends Json4sJacksonSupport {
   implicit val json4sJacksonFormats = formats(NoTypeHints)
 }
 
-class HttpGate(frontend: ActorRef) extends Actor with HttpService {
+class HttpGate(frontend: ActorRef) extends Actor with ActorLogging with HttpService {
   private val config = ConfigFactory.load
   private val tms = config getLong "request.timeout-in-s"
   implicit val timeout = Timeout(tms seconds)
