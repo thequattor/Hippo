@@ -22,7 +22,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   private val id = config getString "storage.local-id"
   private val tms = config getLong "request.timeout-in-s"
   private val replicas = config getInt "storage.replicas"
-  implicit val timeout = Timeout(tms seconds)
+  implicit val timeout = Timeout((tms * 0.95 / replicas) seconds)
   import context.dispatcher
 
   val cluster = Cluster(context.system)
