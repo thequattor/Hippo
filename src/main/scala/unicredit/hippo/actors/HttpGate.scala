@@ -16,7 +16,7 @@ import org.json4s.jackson.Serialization.formats
 import com.typesafe.config.ConfigFactory
 
 
-import messages.{ Request, Result }
+import messages.{ Request, Result, GetSiblings, Siblings }
 
 
 object Support extends Json4sJacksonSupport {
@@ -34,15 +34,22 @@ class HttpGate(frontend: ActorRef) extends Actor with ActorLogging with HttpServ
 
   def receive = runRoute {
     get {
-      parameterMultiMap { params =>
-        val message = Request(
-          table = params("table").head,
-          keys = params("key"),
-          columns = params("column")
-        )
+      path("query") {
+        parameterMultiMap { params =>
+          val message = Request(
+            table = params("table").head,
+            keys = params("key"),
+            columns = params("column")
+          )
 
+          complete {
+            (frontend ? message).mapTo[Result] map { x => render(x.content) }
+          }
+        }
+      } ~
+      path("siblings") {
         complete {
-          (frontend ? message).mapTo[Result] map { x => render(x.content) }
+          (frontend ? GetSiblings).mapTo[Siblings] map { x => render(x.ids) }
         }
       }
     }
