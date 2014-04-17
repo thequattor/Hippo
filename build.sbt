@@ -6,7 +6,12 @@ organization := "unicredit"
 
 scalaVersion := "2.10.3"
 
-scalacOptions ++= Seq("-deprecation", "-feature", "-language:postfixOps")
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature",
+  "-language:postfixOps",
+  "-language:implicitConversions"
+)
 
 Revolver.settings
 

@@ -7,13 +7,14 @@ import scala.concurrent.Future
 import akka.actor._
 import akka.cluster.{ Cluster, Member, MemberStatus }
 import akka.cluster.ClusterEvent._
-import akka.pattern.{ ask, pipe }
+import akka.pattern.pipe
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import scalaz.Scalaz._
 
 import messages._
 import sharding.RemoteShard
+import pattern.fixedAsk
 
 
 class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
