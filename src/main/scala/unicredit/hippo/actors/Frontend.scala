@@ -23,6 +23,10 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   private val id = config getString "storage.local-id"
   private val tms = config getLong "request.timeout-in-s"
   private val replicas = config getInt "storage.replicas"
+  private val cacheSize = config getInt "storage.cache-size"
+  // The timeout is set so that in the worst case we have time
+  // to ask a value to each replica before the whole request
+  // times out
   implicit val timeout = Timeout((tms * 0.95 / replicas) seconds)
   import context.dispatcher
 
@@ -34,9 +38,15 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   override def postStop() = cluster.unsubscribe(self)
 
   val failedFuture = Future.failed(new Exception("No future completed"))
+  // A simple cache for requests. We directly cache instances of
+  // Future[Result] instead of waiting for the responses, then
+  // caching the Result. This is probably less efficient in terms
+  // of RAM usage, but it is easier and does not incur in race
+  // conditions in the case where many identical requests are fired
+  // concurrently.
   val cache = CacheBuilder
     .newBuilder
-    .maximumSize(config getInt "storage.cache-size")
+    .maximumSize(cacheSize)
     .build(new CacheLoader[Request, Future[Result]] {
       def load(request: Request) = {
         val Request(table, keys, columns) = request
