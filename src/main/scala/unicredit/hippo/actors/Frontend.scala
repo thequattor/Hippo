@@ -104,6 +104,9 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       cache get m pipeTo sender
     case m: Retrieve ⇒
       retriever ? m pipeTo sender
+    case m: Switch ⇒
+      retriever ! m
+      cache.invalidateAll
   }
 
   def firstOf[A](futures: => Stream[Future[A]])(implicit df: A): Future[A] = futures match {
