@@ -11,6 +11,7 @@ import akka.pattern.pipe
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import scalaz.Scalaz._
+import com.google.common.cache.{ CacheBuilder, CacheLoader }
 
 import messages._
 import sharding.RemoteShard
@@ -33,6 +34,39 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   override def postStop() = cluster.unsubscribe(self)
 
   val failedFuture = Future.failed(new Exception("No future completed"))
+  val cache = CacheBuilder
+    .newBuilder
+    .maximumSize(config getInt "storage.cache-size")
+    .build(new CacheLoader[Request, Future[Result]] {
+      def load(request: Request) = {
+        val Request(table, keys, columns) = request
+        // We make a separate request for each key. This is less
+        // efficient than grouping the keys by shard and issuing
+        // a single request to each server, but it has the advantage
+        // that it is very easy to deal with failures by looking for
+        // the key in the next shard. Implementation may change in the
+        // future if this becomes a performance issue.
+        val results = keys map { key =>
+          val message = Retrieve(table, List(key), columns)
+          // Remotes are sorted so that the local server is put first, if present
+          val remotes = sort(shard.indicesFor(key, siblings.keySet.toSeq, replicas)).toStream
+          // Change this with a proper implementation of streams
+          // that does not force its first element.
+          // Right now we just insert a dummy element at the head
+          // of the stream to avoid firing a remore request if
+          // it is not needed.
+          val lazyRequests = failedFuture #:: (remotes map { id =>
+            log.info(s"Sending request to $id for key $key")
+            // If the result set is empty, the key was not found,
+            // and we should count this as a failed request
+            (siblings(id) ? message).mapTo[Result] filter (! _.content.isEmpty)
+          })
+
+          firstOf(lazyRequests)(df = Result(Map()))
+        }
+        Future.sequence(results) map accumulate
+      }
+    })
 
   // Puts id in front of other indices, if present
   private def sort(indices: List[String]) =
@@ -56,33 +90,8 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       siblings = siblings filterNot { case (_, a) => a == actor }
     // Actual request messages
     //************************
-    case Request(table, keys, columns) ⇒
-      // We make a separate request for each key. This is less
-      // efficient than grouping the keys by shard and issuing
-      // a single request to each server, but it has the advantage
-      // that it is very easy to deal with failures by looking for
-      // the key in the next shard. Implementation may change in the
-      // future if this becomes a performance issue.
-      val results = keys map { key =>
-        val message = Retrieve(table, List(key), columns)
-        // Remotes are sorted so that the local server is put first, if present
-        val remotes = sort(shard.indicesFor(key, siblings.keySet.toSeq, replicas)).toStream
-        // Change this with a proper implementation of streams
-        // that does not force its first element.
-        // Right now we just insert a dummy element at the head
-        // of the stream to avoid firing a remore request if
-        // it is not needed.
-        val lazyRequests = failedFuture #:: (remotes map { id =>
-          log.info(s"Sending request to $id for key $key")
-          // If the result set is empty, the key was not found,
-          // and we should count this as a failed request
-          (siblings(id) ? message).mapTo[Result] filter (! _.content.isEmpty)
-        })
-
-        firstOf(lazyRequests)(df = Result(Map()))
-      }
-
-      Future.sequence(results) map accumulate pipeTo sender
+    case m: Request ⇒
+      cache get m pipeTo sender
     case m: Retrieve ⇒
       retriever ? m pipeTo sender
   }
