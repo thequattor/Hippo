@@ -14,7 +14,7 @@ import scalaz.Scalaz._
 import com.google.common.cache.{ CacheBuilder, CacheLoader }
 
 import messages._
-import sharding.RemoteShard
+import util.shards
 import pattern.fixedAsk
 
 
@@ -32,7 +32,6 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
 
   val cluster = Cluster(context.system)
   var siblings = Map(id -> self)
-  val shard = new RemoteShard
 
   override def preStart() = cluster.subscribe(self, classOf[MemberUp])
   override def postStop() = cluster.unsubscribe(self)
@@ -59,7 +58,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
         val results = keys map { key =>
           val message = Retrieve(table, List(key), columns)
           // Remotes are sorted so that the local server is put first, if present
-          val remotes = sort(shard.indicesFor(key, siblings.keySet.toSeq, replicas)).toStream
+          val remotes = sort(shards(key, siblings.keySet.toSeq, replicas)).toStream
           // Change this with a proper implementation of streams
           // that does not force its first element.
           // Right now we just insert a dummy element at the head

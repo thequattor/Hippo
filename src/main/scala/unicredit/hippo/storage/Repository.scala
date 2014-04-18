@@ -5,15 +5,25 @@ import scala.util.control.Exception.allCatch
 
 import scalaz._
 import Scalaz._
+import org.apache.hadoop.conf.Configuration
+import org.apache.hadoop.fs.Path
 
-import sharding.Shard
+import util.shard
 
 
-class Repository(home: String, table: String, partitions: Int, version: String) {
-  private val shard = new Shard(home, table, partitions, version)
+class Repository(home: String, table: String, version: String) {
   private val joiner = new TrivialJoiner("𐒉") // OSMANYA LETTER SHIIN (10489)
+  private val path = s"$home/$table/$version/shards/"
+  private val indices: Seq[String] = {
+    val dir = new Path(path)
+    val fs = dir.getFileSystem(new Configuration)
+    val iter = fs.listLocatedStatus(dir)
+    var names = List.empty[String]
+    while (iter.hasNext) { names ::= iter.next.getPath.getName }
+    names
+  }
 
-  private def uri(key: String) = shard.uriForKey(key)
+  private def uri(key: String) = s"$path/${ shard(key, indices) }"
 
   private def accumulate[A, B](maps: Iterable[Map[A, Map[B, String]]]) =
     maps.foldLeft(Map.empty[A, Map[B, String]]) (_ |+| _)
