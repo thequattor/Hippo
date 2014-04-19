@@ -42,7 +42,8 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   // caching the Result. This is probably less efficient in terms
   // of RAM usage, but it is easier and does not incur in race
   // conditions in the case where many identical requests are fired
-  // concurrently.
+  // concurrently. It is also safer with respect to race conditions
+  // during version switches.
   val cache = CacheBuilder
     .newBuilder
     .maximumSize(cacheSize)

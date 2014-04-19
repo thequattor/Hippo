@@ -8,20 +8,13 @@ import Scalaz._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
-import util.shard
+import util.{ shard, children }
 
 
 class Repository(home: String, table: String, version: String) {
   private val joiner = new TrivialJoiner("𐒉") // OSMANYA LETTER SHIIN (10489)
   private val path = s"$home/$table/$version/shards/"
-  private val indices: Seq[String] = {
-    val dir = new Path(path)
-    val fs = dir.getFileSystem(new Configuration)
-    val iter = fs.listLocatedStatus(dir)
-    var names = List.empty[String]
-    while (iter.hasNext) { names ::= iter.next.getPath.getName }
-    names
-  }
+  private val indices = children(path)
 
   private def uri(key: String) = s"$path/${ shard(key, indices) }"
 
