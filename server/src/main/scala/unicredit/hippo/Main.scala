@@ -2,6 +2,7 @@ package unicredit.hippo
 
 import akka.actor.{ ActorSystem, Props }
 import akka.io.IO
+import akka.contrib.pattern.ClusterReceptionistExtension
 import spray.can.Http
 import com.typesafe.config.ConfigFactory
 
@@ -29,5 +30,6 @@ object Main extends App {
     name = "http"
   )
 
+  ClusterReceptionistExtension(system).registerService(frontend)
   IO(Http) ! Http.Bind(http, interface = host, port = port)
 }

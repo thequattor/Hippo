@@ -3,6 +3,9 @@ import Keys._
 import spray.revolver.RevolverPlugin._
 
 object BuildSettings {
+  val akkaVersion = "2.3.1"
+  val sprayVersion = "1.3.1"
+
   val buildSettings = Defaults.defaultSettings ++ Seq(
     organization := "unicredit",
     version := "1.0",
@@ -17,8 +20,9 @@ object BuildSettings {
       "RoundEights" at "http://maven.spikemark.net/roundeights"
     ),
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % "2.3.1",
-      "com.typesafe.akka" %% "akka-cluster" % "2.3.1",
+      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+      "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
+      "com.typesafe.akka" %% "akka-contrib" % akkaVersion,
       "com.roundeights" %% "hasher" % "1.0.0"
     )
   )
@@ -46,8 +50,8 @@ object CustomBuild extends Build {
       libraryDependencies ++= Seq(
         "org.apache.hadoop" % "hadoop-common" % "2.4.0",
         "org.scalaz" %% "scalaz-core" % "7.0.6",
-        "io.spray" % "spray-can" % "1.3.1",
-        "io.spray" % "spray-routing" % "1.3.1",
+        "io.spray" % "spray-can" % sprayVersion,
+        "io.spray" % "spray-routing" % sprayVersion,
         "org.json4s" %% "json4s-jackson" % "3.2.8",
         "com.google.guava" % "guava" % "16.0.1"
       )
@@ -57,6 +61,6 @@ object CustomBuild extends Build {
   lazy val client = Project(
     "hippodb-client",
     file("client"),
-    settings = buildSettings
+    settings = buildSettings ++ Revolver.settings
   ) dependsOn(common)
 }

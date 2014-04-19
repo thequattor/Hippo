@@ -109,6 +109,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       cache.invalidateAll
     case GetSiblings ⇒
       sender ! Siblings(siblings.keySet.toList)
+    case x ⇒ println("Received message", x)
   }
 
   def firstOf[A](futures: => Stream[Future[A]])(implicit df: A): Future[A] = futures match {
