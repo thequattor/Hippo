@@ -14,7 +14,7 @@ import scalaz.Scalaz._
 import com.google.common.cache.{ CacheBuilder, CacheLoader }
 
 import messages._
-import util.shards
+import common.shards
 import pattern.fixedAsk
 
 

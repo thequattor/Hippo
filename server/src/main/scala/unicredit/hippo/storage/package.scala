@@ -4,7 +4,7 @@ import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
 
-package object util {
+package object storage {
   // This rather low-level function reads a
   // small UTF-8 encoded file and returns a
   // string with its content.

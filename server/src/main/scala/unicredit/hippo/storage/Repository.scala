@@ -8,7 +8,7 @@ import Scalaz._
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 
-import util.{ shard, children }
+import common.shard
 
 
 class Repository(home: String, table: String, version: String) {
