@@ -18,5 +18,4 @@ object Main extends App {
     Props(new Client(contacts)),
     name = "client"
   )
-
 }

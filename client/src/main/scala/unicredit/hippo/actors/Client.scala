@@ -6,18 +6,19 @@ import scala.concurrent.Future
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.contrib.pattern.ClusterClient
-import akka.pattern.{ ask, pipe }
+import akka.pattern.pipe
 import akka.util.Timeout
 
-import common.shard
-import messages.{ RefreshNodes, GetSiblings, Siblings }
+import common.shards
+import pattern.{ fixedAsk, fallback }
+import messages._
 
 
 class Client(contacts: Seq[String]) extends Actor with ActorLogging {
   private val initialContacts = contacts map { url ⇒
       context.actorSelection(s"$url/user/receptionist")
     } toSet
-  private val tms = 15 // config getLong "request.timeout-in-s"
+  private val tms = 5 // config getLong "request.timeout-in-s"
   implicit val timeout = Timeout(tms seconds)
 
   val clusterClient = context.actorOf(ClusterClient.props(initialContacts))
@@ -32,9 +33,11 @@ class Client(contacts: Seq[String]) extends Actor with ActorLogging {
       context.system.scheduler.scheduleOnce(1 minute) { self ! RefreshNodes }
     case Siblings(siblings) ⇒
       nodes = siblings
-    case s ⇒
-      val id = shard(s.toString, nodes.keySet.toList)
-      val destination = nodes(id)
-      destination ? s pipeTo sender
+    case m: Request ⇒
+      val ids = shards(m.toString, nodes.keySet.toList, 3)
+      val List(d1, d2, d3) = ids map nodes
+      val result = (d1 ? m) orElse (d2 ? m) orElse (d3 ? m)
+
+      result pipeTo sender
   }
 }
