@@ -108,7 +108,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       retriever ! m
       cache.invalidateAll
     case GetSiblings ⇒
-      sender ! Siblings(siblings.keySet.toList)
+      sender ! Siblings(siblings)
     case x ⇒ log.info(s"Ignored message $x")
   }
 

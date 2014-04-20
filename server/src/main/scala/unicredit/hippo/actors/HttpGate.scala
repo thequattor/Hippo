@@ -49,7 +49,7 @@ class HttpGate(frontend: ActorRef) extends Actor with ActorLogging with HttpServ
       } ~
       path("siblings") {
         complete {
-          (frontend ? GetSiblings).mapTo[Siblings] map { x ⇒ render(x.ids) }
+          (frontend ? GetSiblings).mapTo[Siblings] map { x ⇒ render(x.nodes.keySet.toList) }
         }
       }
     }
