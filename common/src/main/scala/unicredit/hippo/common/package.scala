@@ -8,8 +8,8 @@ package object common {
   private def hash(s: String) = s.md5.hex
 
   def shard(key: String, indices: Seq[String]) =
-    indices maxBy { i => hash(key + i) }
+    indices maxBy { i ⇒ hash(key + i) }
 
   def shards(key: String, indices: Seq[String], n: Int) =
-    indices.sortBy({ i => hash(key + i) })(order) take n toList
+    indices.sortBy({ i ⇒ hash(key + i) })(order) take n toList
 }

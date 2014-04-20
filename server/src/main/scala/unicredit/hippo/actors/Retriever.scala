@@ -2,7 +2,7 @@ package unicredit.hippo
 package actors
 
 import scala.concurrent.duration._
-import scala.collection.mutable.{ HashMap => MMap }
+import scala.collection.mutable.{ HashMap ⇒ MMap }
 
 import akka.actor.{ Actor, ActorLogging }
 import akka.util.Timeout

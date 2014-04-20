@@ -22,13 +22,13 @@ class Repository(home: String, table: String, version: String) {
     maps.foldLeft(Map.empty[A, Map[B, String]]) (_ |+| _)
 
   private def decode(result: Map[String, String]) =
-    result.toList map { case (key, value) =>
+    result.toList map { case (key, value) ⇒
       val (k, c) = joiner.split(key)
       Map(k -> Map(c -> value))
     }
 
   def read(keys: Seq[String], columns: Seq[String]) = {
-    val shards = keys groupBy uri map { case (path, ks) =>
+    val shards = keys groupBy uri map { case (path, ks) ⇒
       val result = new IO(path) read (for {
         k <- ks
         c <- columns

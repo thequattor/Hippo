@@ -16,16 +16,6 @@ object Main extends App {
 
   val client = system.actorOf(
     Props(new Client(contacts)),
-    name = "retriever"
+    name = "client"
   )
-
-  import system.dispatcher
-  import scala.concurrent.duration._
-
-  system.scheduler.scheduleOnce(10 seconds) {
-    println("About to send messages")
-    client ! "ciao"
-    client ! "prova"
-    println("Messages sent")
-  }
 }

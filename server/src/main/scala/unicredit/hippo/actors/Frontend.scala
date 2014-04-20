@@ -56,7 +56,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
         // that it is very easy to deal with failures by looking for
         // the key in the next shard. Implementation may change in the
         // future if this becomes a performance issue.
-        val results = keys map { key =>
+        val results = keys map { key ⇒
           val message = Retrieve(table, List(key), columns)
           // Remotes are sorted so that the local server is put first, if present
           val remotes = sort(shards(key, siblings.keySet.toSeq, replicas)).toStream
@@ -65,7 +65,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
           // Right now we just insert a dummy element at the head
           // of the stream to avoid firing a remore request if
           // it is not needed.
-          val lazyRequests = failedFuture #:: (remotes map { id =>
+          val lazyRequests = failedFuture #:: (remotes map { id ⇒
             log.info(s"Sending request to $id for key $key")
             // If the result set is empty, the key was not found,
             // and we should count this as a failed request
@@ -97,7 +97,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       context watch sender
     case Terminated(actor) ⇒
       log.info(s"Lost contact with actor $actor")
-      siblings = siblings filterNot { case (_, a) => a == actor }
+      siblings = siblings filterNot { case (_, a) ⇒ a == actor }
     // Actual request messages
     //************************
     case m: Request ⇒
@@ -109,15 +109,15 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       cache.invalidateAll
     case GetSiblings ⇒
       sender ! Siblings(siblings.keySet.toList)
-    case x ⇒ println("Received message", x)
+    case x ⇒ log.info(s"Ignored message $x")
   }
 
-  def firstOf[A](futures: => Stream[Future[A]])(implicit df: A): Future[A] = futures match {
-    case Stream() => Future(df)
+  def firstOf[A](futures: ⇒ Stream[Future[A]])(implicit df: A): Future[A] = futures match {
+    case Stream() ⇒ Future(df)
     // One may think to match h #:: t, but this would eagerly
     // evaluate the head of t, firing one more request than
     // needed.
-    case stream => stream.head recoverWith { case _: Throwable => firstOf(stream.tail) }
+    case stream ⇒ stream.head recoverWith { case _: Throwable ⇒ firstOf(stream.tail) }
     // Unfortunately, Future#fallbackTo evaluates its argument
     // eagerly, and this would force us to spawn more requests
     // than needed. Hence the use of Future#recoverWith
@@ -130,7 +130,7 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   }
 
   def accumulate(results: Iterable[Result]) =
-    results.foldLeft(Result(Map())) { case (Result(m1), Result(m2)) =>
+    results.foldLeft(Result(Map())) { case (Result(m1), Result(m2)) ⇒
       Result(m1 |+| m2)
     }
 }

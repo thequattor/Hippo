@@ -11,8 +11,8 @@ class TrivialJoiner(separator: String) extends Joiner {
     s"$key$separator$column"
 
   def split(x: String) = x split separator match {
-    case Array(a, b) => (a, b)
-    case _ => sys.error(s"Not a valid encoded string: $x")
+    case Array(a, b) ⇒ (a, b)
+    case _ ⇒ sys.error(s"Not a valid encoded string: $x")
   }
 
 }

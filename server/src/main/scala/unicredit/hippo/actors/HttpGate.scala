@@ -35,7 +35,7 @@ class HttpGate(frontend: ActorRef) extends Actor with ActorLogging with HttpServ
   def receive = runRoute {
     get {
       path("query") {
-        parameterMultiMap { params =>
+        parameterMultiMap { params ⇒
           val message = Request(
             table = params("table").head,
             keys = params("key"),
@@ -43,13 +43,13 @@ class HttpGate(frontend: ActorRef) extends Actor with ActorLogging with HttpServ
           )
 
           complete {
-            (frontend ? message).mapTo[Result] map { x => render(x.content) }
+            (frontend ? message).mapTo[Result] map { x ⇒ render(x.content) }
           }
         }
       } ~
       path("siblings") {
         complete {
-          (frontend ? GetSiblings).mapTo[Siblings] map { x => render(x.ids) }
+          (frontend ? GetSiblings).mapTo[Siblings] map { x ⇒ render(x.ids) }
         }
       }
     }

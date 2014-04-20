@@ -26,6 +26,6 @@ final class AskableActorRef(val actorRef: ActorRef) extends AnyVal {
   def ?(message: Any)(implicit timeout: Timeout) = try {
     ask(actorRef).?(message)(timeout)
   } catch {
-    case e: AskTimeoutException => Future.failed(e)
+    case e: AskTimeoutException ⇒ Future.failed(e)
   }
 }
