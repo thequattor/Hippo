@@ -15,7 +15,7 @@ import com.google.common.cache.{ CacheBuilder, CacheLoader }
 
 import messages._
 import common.shards
-import pattern.fixedAsk
+import pattern.{ fixedAsk, fallback }
 
 
 class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
@@ -117,10 +117,11 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
     // One may think to match h #:: t, but this would eagerly
     // evaluate the head of t, firing one more request than
     // needed.
-    case stream ⇒ stream.head recoverWith { case _: Throwable ⇒ firstOf(stream.tail) }
+    case stream ⇒ stream.head orElse firstOf(stream.tail)
     // Unfortunately, Future#fallbackTo evaluates its argument
     // eagerly, and this would force us to spawn more requests
-    // than needed. Hence the use of Future#recoverWith
+    // than needed. Hence the use of Future#recoverWith, as in
+    // the fallback pattern.
   }
 
   def siblingActor(member: Member) = {
