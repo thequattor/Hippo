@@ -34,9 +34,15 @@ class Client(contacts: Seq[String]) extends Actor with ActorLogging {
     case Siblings(siblings) ⇒
       nodes = siblings
     case m: Request ⇒
-      val ids = shards(m.toString, nodes.keySet.toList, 3)
-      val List(d1, d2, d3) = ids map nodes
-      val result = (d1 ? m) orElse (d2 ? m) orElse (d3 ? m)
+      val ids = shards(m.toString, nodes.keySet.toList, 2)
+      val List(actor1, actor2) = ids map nodes
+      val result = (actor1 ? m) orElse {
+        // No reply from the first destination, we ask
+        // somewhere else. But in the meantime, better
+        // refresh our node list, since someone went down.
+        self ! RefreshNodes
+        (actor2 ? m)
+      }
 
       result pipeTo sender
   }
