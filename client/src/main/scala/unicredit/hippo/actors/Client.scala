@@ -2,7 +2,7 @@ package unicredit.hippo
 package actors
 
 import scala.concurrent.duration._
-import scala.concurrent.Future
+import scala.concurrent.{ Future, Promise }
 
 import akka.actor.{ Actor, ActorLogging, ActorRef }
 import akka.contrib.pattern.ClusterClient
@@ -20,6 +20,7 @@ class Client(contacts: Seq[String]) extends Actor with ActorLogging {
     } toSet
   private val tms = 5 // config getLong "request.timeout-in-s"
   implicit val timeout = Timeout(tms seconds)
+  private val ready = Promise[Boolean]()
 
   val clusterClient = context.actorOf(ClusterClient.props(initialContacts))
   var nodes = Map.empty[String, ActorRef]
@@ -33,15 +34,20 @@ class Client(contacts: Seq[String]) extends Actor with ActorLogging {
       context.system.scheduler.scheduleOnce(1 minute) { self ! RefreshNodes }
     case Siblings(siblings) ⇒
       nodes = siblings
+      if (! ready.isCompleted) { ready.success(true) }
+    case AreYouReady ⇒
+      sender ! ReadyState(ready.future)
+    case GetSiblings ⇒
+      sender ! nodes
     case m: Request ⇒
       val ids = shards(m.toString, nodes.keySet.toList, 2)
-      val List(actor1, actor2) = ids map nodes
-      val result = (actor1 ? m) orElse {
+      val actors = ids map nodes
+      val result = (actors.head ? m) orElse {
         // No reply from the first destination, we ask
         // somewhere else. But in the meantime, better
         // refresh our node list, since someone went down.
         self ! RefreshNodes
-        (actor2 ? m)
+        (actors.tail.head ? m)
       }
 
       result pipeTo sender

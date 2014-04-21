@@ -1,5 +1,7 @@
 package unicredit.hippo
 
+import scala.concurrent.Future
+
 import akka.actor.ActorRef
 
 
@@ -21,4 +23,6 @@ package object messages {
   case object GetSiblings
   case class Siblings(nodes: Map[String, ActorRef])
   case object RefreshNodes
+  case object AreYouReady
+  case class ReadyState(state: Future[Boolean])
 }
