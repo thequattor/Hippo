@@ -14,7 +14,7 @@ import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
 import org.json4s.jackson.Serialization.formats
 import com.typesafe.config.ConfigFactory
-
+import net.ceedubs.ficus.FicusConfig._
 
 import messages.{ Request, Result, GetSiblings, Siblings }
 
@@ -25,8 +25,8 @@ object Support extends Json4sJacksonSupport {
 
 class HttpGate(client: ActorRef) extends Actor with ActorLogging with HttpService {
   private val config = ConfigFactory.load
-  private val tms = config getLong "request.timeout-in-s"
-  implicit val timeout = Timeout(tms seconds)
+  private val duration = config.as[FiniteDuration]("request.timeout")
+  implicit val timeout = Timeout(duration)
 
   def actorRefFactory = context
   import context.dispatcher

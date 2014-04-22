@@ -12,6 +12,7 @@ import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
 import scalaz.Scalaz._
 import com.google.common.cache.{ CacheBuilder, CacheLoader }
+import net.ceedubs.ficus.FicusConfig._
 
 import messages._
 import common.shards
@@ -20,14 +21,16 @@ import pattern.{ fixedAsk, fallback }
 
 class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   private val config = ConfigFactory.load
-  private val id = config getString "storage.local-id"
-  private val tms = config getLong "request.timeout-in-s"
-  private val replicas = config getInt "storage.replicas"
-  private val cacheSize = config getInt "storage.cache-size"
+  private val id = config.as[String]("storage.local-id")
+  private val duration = config.as[FiniteDuration]("request.timeout")
+  private val replicas = config.as[Int]("storage.replicas")
+  private val cacheSize = config.as[Int]("storage.cache-size")
   // The timeout is set so that in the worst case we have time
   // to ask a value to each replica before the whole request
-  // times out
-  implicit val timeout = Timeout((tms * 0.95 / replicas) seconds)
+  // times out. 95% is here 19/20 because
+  //   FiniteDuration#*(factor: Double)
+  // returns Duration and not FiniteDuration
+  implicit val timeout = Timeout(duration * 19 div (20 * replicas))
   import context.dispatcher
 
   val cluster = Cluster(context.system)

@@ -1,20 +1,19 @@
 package unicredit.hippo
 
-import scala.collection.JavaConversions._
-
 import akka.actor.{ ActorSystem, Props }
 import akka.io.IO
 import spray.can.Http
 import com.typesafe.config.ConfigFactory
+import net.ceedubs.ficus.FicusConfig._
 
 import actors.{ Client, HttpGate }
 
 
 object Main extends App {
   private val config = ConfigFactory.load
-  private val host = config getString "http.hostname"
-  private val port = config getInt "http.port"
-  private val servers = config getStringList "hippo.servers"
+  private val host = config.as[String]("http.hostname")
+  private val port = config.as[Int]("http.port")
+  private val servers = config.as[List[String]]("hippo.servers")
 
   implicit val system = ActorSystem("hippo-http")
   val client = system.actorOf(

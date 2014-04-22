@@ -23,7 +23,8 @@ object BuildSettings {
       "com.typesafe.akka" %% "akka-actor" % akkaVersion,
       "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
       "com.typesafe.akka" %% "akka-contrib" % akkaVersion,
-      "com.roundeights" %% "hasher" % "1.0.0"
+      "com.roundeights" %% "hasher" % "1.0.0",
+      "net.ceedubs" %% "ficus" % "1.0.0"
     )
   )
 }
@@ -50,9 +51,6 @@ object CustomBuild extends Build {
       libraryDependencies ++= Seq(
         "org.apache.hadoop" % "hadoop-common" % "2.4.0",
         "org.scalaz" %% "scalaz-core" % "7.0.6",
-        "io.spray" % "spray-can" % sprayVersion,
-        "io.spray" % "spray-routing" % sprayVersion,
-        "org.json4s" %% "json4s-jackson" % "3.2.8",
         "com.google.guava" % "guava" % "16.0.1"
       )
     ) ++ Revolver.settings
