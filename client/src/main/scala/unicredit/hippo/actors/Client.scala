@@ -18,8 +18,7 @@ class Client(contacts: Seq[String]) extends Actor with ActorLogging {
   private val initialContacts = contacts map { url ⇒
       context.actorSelection(s"$url/user/receptionist")
     } toSet
-  private val tms = 5 // config getLong "request.timeout-in-s"
-  implicit val timeout = Timeout(tms seconds)
+  implicit val timeout = Timeout(5 seconds)
   private val ready = Promise[Boolean]()
 
   val clusterClient = context.actorOf(ClusterClient.props(initialContacts))
@@ -31,7 +30,7 @@ class Client(contacts: Seq[String]) extends Actor with ActorLogging {
   def receive = {
     case RefreshNodes ⇒
       clusterClient ! ClusterClient.Send("/user/frontend", GetSiblings, localAffinity = true)
-      context.system.scheduler.scheduleOnce(1 minute) { self ! RefreshNodes }
+      context.system.scheduler.scheduleOnce(30 seconds) { self ! RefreshNodes }
     case Siblings(siblings) ⇒
       nodes = siblings
       if (! ready.isCompleted) { ready.success(true) }
@@ -46,6 +45,7 @@ class Client(contacts: Seq[String]) extends Actor with ActorLogging {
         // No reply from the first destination, we ask
         // somewhere else. But in the meantime, better
         // refresh our node list, since someone went down.
+        log.info(s"Lost contact with ${ ids.head }, refreshing node list")
         self ! RefreshNodes
         (actors.tail.head ? m)
       }
