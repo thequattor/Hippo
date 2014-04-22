@@ -35,7 +35,7 @@ object CustomBuild extends Build {
     "hippodb-root",
     file("."),
     settings = buildSettings
-  ) aggregate(client, server)
+  ) aggregate(client, server, http)
 
   lazy val common = Project(
     "hippodb-common",
@@ -61,6 +61,18 @@ object CustomBuild extends Build {
   lazy val client = Project(
     "hippodb-client",
     file("client"),
-    settings = buildSettings ++ Revolver.settings
+    settings = buildSettings
   ) dependsOn(common)
+
+  lazy val http = Project(
+    "hippodb-http",
+    file("http"),
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(
+        "io.spray" % "spray-can" % sprayVersion,
+        "io.spray" % "spray-routing" % sprayVersion,
+        "org.json4s" %% "json4s-jackson" % "3.2.8"
+      )
+    ) ++ Revolver.settings
+  ) dependsOn(client)
 }

@@ -23,7 +23,7 @@ object Support extends Json4sJacksonSupport {
   implicit val json4sJacksonFormats = formats(NoTypeHints)
 }
 
-class HttpGate(frontend: ActorRef) extends Actor with ActorLogging with HttpService {
+class HttpGate(client: ActorRef) extends Actor with ActorLogging with HttpService {
   private val config = ConfigFactory.load
   private val tms = config getLong "request.timeout-in-s"
   implicit val timeout = Timeout(tms seconds)
@@ -43,13 +43,13 @@ class HttpGate(frontend: ActorRef) extends Actor with ActorLogging with HttpServ
           )
 
           complete {
-            (frontend ? message).mapTo[Result] map { x ⇒ render(x.content) }
+            (client ? message).mapTo[Result] map { x ⇒ render(x.content) }
           }
         }
       } ~
-      path("siblings") {
+      path("nodes") {
         complete {
-          (frontend ? GetSiblings).mapTo[Siblings] map { x ⇒ render(x.nodes.keySet.toList) }
+          (client ? GetSiblings).mapTo[Map[String, ActorRef]] map { x ⇒ render(x.keySet.toList) }
         }
       }
     }
