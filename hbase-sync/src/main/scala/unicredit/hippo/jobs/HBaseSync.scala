@@ -45,7 +45,6 @@ class HBaseSync(args: Args) extends Job(args) {
   )
 
   input.readStrings
-    .limit(100000)
     .flatMap('key -> 'server) { key: String => shards(key, servers, replicas) }
     .map('key -> 'partition) { key: String => shard(key, partitions) }
     .map(fields -> 'all) { tuple: Tuple =>
