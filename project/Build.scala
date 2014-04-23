@@ -93,6 +93,7 @@ object CustomBuild extends Build {
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
        "org.apache.hadoop" % "hadoop-common" % "2.4.0",
+       "org.apache.hadoop" % "hadoop-hdfs" % "2.4.0",
        "com.github.scopt" %% "scopt" % "3.2.0"
       )
     )
