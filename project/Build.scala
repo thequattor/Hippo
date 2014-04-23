@@ -7,6 +7,7 @@ import AssemblyKeys._
 object BuildSettings {
   val akkaVersion = "2.3.1"
   val sprayVersion = "1.3.1"
+  val cdhVersion = "4.6.0"
 
   val buildSettings = Defaults.defaultSettings ++ Seq(
     organization := "unicredit",
@@ -95,11 +96,10 @@ object CustomBuild extends Build {
         "Concurrent Maven Repo" at "http://conjars.org/repo"
       ),
       libraryDependencies ++= Seq(
-        "com.roundeights" %% "hasher" % "1.0.0",
         "com.twitter" %% "scalding-core" % "0.9.1",
-        "org.apache.hadoop" % "hadoop-core" % "2.0.0-mr1-cdh4.6.0" % "provided",
-        "org.apache.hadoop" % "hadoop-common" % "2.0.0-cdh4.6.0" % "provided",
-        "org.apache.hbase" % "hbase" % "0.94.15-cdh4.6.0"// % "provided"
+        "org.apache.hadoop" % "hadoop-core" % s"2.0.0-mr1-cdh$cdhVersion" % "provided",
+        "org.apache.hadoop" % "hadoop-common" % s"2.0.0-cdh$cdhVersion" % "provided",
+        "org.apache.hbase" % "hbase" % s"0.94.15-cdh$cdhVersion"// % "provided"
       ),
       mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
         {
