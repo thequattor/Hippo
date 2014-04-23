@@ -9,6 +9,7 @@ import org.apache.hadoop.io.Text
 
 import unicredit.hippo.source.{ HBaseSource, TemplatedTextSequenceFile }
 import unicredit.hippo.storage.TrivialJoiner
+import unicredit.hippo.common.{ shard, shards }
 
 
 class HBaseSync(args: Args) extends Job(args) {
@@ -26,12 +27,6 @@ class HBaseSync(args: Args) extends Job(args) {
   private def hash(s: String) = s.md5.hex
   private val joiner = new TrivialJoiner("𐒉") // OSMANYA LETTER SHIIN (10489)
 
-  def shard(key: String, indices: Seq[String]) =
-    indices maxBy { i ⇒ hash(key + i) }
-
-  def shards(key: String, indices: Seq[String], n: Int) =
-    indices.sortBy({ i ⇒ hash(key + i) })(order) take n toList
-
   val input = HBaseSource(
     table,
     quorum,
@@ -47,7 +42,6 @@ class HBaseSync(args: Args) extends Job(args) {
   )
 
   input.readStrings
-    .limit(10000)
     .flatMap('key -> 'server) { key: String => shards(key, servers, replicas) }
     .map('key -> 'partition) { key: String => shard(key, partitions) }
     .map(fields -> 'all) { tuple: Tuple =>

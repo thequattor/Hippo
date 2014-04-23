@@ -32,7 +32,7 @@ object CustomBuild extends Build {
     "hippodb-root",
     file("."),
     settings = buildSettings
-  ) aggregate(client, server, http, hbase)
+  ) aggregate(client, server, http, hbase, retriever)
 
   lazy val common = Project(
     "hippodb-common",
@@ -86,6 +86,17 @@ object CustomBuild extends Build {
       )
     ) ++ Revolver.settings
   ) dependsOn(client)
+
+  lazy val retriever = Project(
+    "hippodb-retriever",
+    file("retriever"),
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(
+       "org.apache.hadoop" % "hadoop-common" % "2.4.0",
+       "com.github.scopt" %% "scopt" % "3.2.0"
+      )
+    )
+  )
 
   lazy val hbase = Project(
     "hippodb-hbase-sync",
