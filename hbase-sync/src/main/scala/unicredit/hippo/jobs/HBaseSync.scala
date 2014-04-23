@@ -5,8 +5,9 @@ import scala.collection.JavaConversions._
 import cascading.tuple.{ Tuple, Fields }
 import com.twitter.scalding._
 import com.roundeights.hasher.Implicits._
+import org.apache.hadoop.io.Text
 
-import unicredit.hippo.source.HBaseSource
+import unicredit.hippo.source.{ HBaseSource, TemplatedTextSequenceFile }
 import unicredit.hippo.storage.TrivialJoiner
 
 
@@ -38,13 +39,15 @@ class HBaseSync(args: Args) extends Job(args) {
     List.fill(columns.length)(columnFamily),
     columns
   )
-  val output = new TemplatedSequenceFile(
+  val output = TemplatedTextSequenceFile(
     basePath = args("output"),
     template = "%s/shards/%s",
-    pathFields = ('server, 'partition)
+    pathFields = ('server, 'partition),
+    fields = ('key, 'value)
   )
 
   input.readStrings
+    .limit(10000)
     .flatMap('key -> 'server) { key: String => shards(key, servers, replicas) }
     .map('key -> 'partition) { key: String => shard(key, partitions) }
     .map(fields -> 'all) { tuple: Tuple =>
@@ -58,7 +61,8 @@ class HBaseSync(args: Args) extends Job(args) {
         (key, fields) <- xs
         (column, value) <- (columns, fields).zipped
         if value != null
-      } yield (joiner.join(key, column), value)
+      } yield (new Text(joiner.join(key, column)), new Text(value))
     }
+    .project('server, 'partition, 'key, 'value)
     .write(output)
 }
