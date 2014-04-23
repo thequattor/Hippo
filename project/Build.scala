@@ -1,6 +1,8 @@
 import sbt._
 import Keys._
 import spray.revolver.RevolverPlugin._
+import sbtassembly.Plugin._
+import AssemblyKeys._
 
 object BuildSettings {
   val akkaVersion = "2.3.1"
@@ -18,13 +20,6 @@ object BuildSettings {
     ),
     resolvers ++= Seq(
       "RoundEights" at "http://maven.spikemark.net/roundeights"
-    ),
-    libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor" % akkaVersion,
-      "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
-      "com.typesafe.akka" %% "akka-contrib" % akkaVersion,
-      "com.roundeights" %% "hasher" % "1.0.0",
-      "net.ceedubs" %% "ficus" % "1.0.0"
     )
   )
 }
@@ -36,12 +31,29 @@ object CustomBuild extends Build {
     "hippodb-root",
     file("."),
     settings = buildSettings
-  ) aggregate(client, server, http)
+  ) aggregate(client, server, http, hbase)
 
   lazy val common = Project(
     "hippodb-common",
     file("common"),
-    settings = buildSettings
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(
+        "com.roundeights" %% "hasher" % "1.0.0"
+      )
+    )
+  )
+
+  lazy val akkaCommon = Project(
+    "hippodb-akka-common",
+    file("akka-common"),
+    settings = buildSettings ++ Seq(
+      libraryDependencies ++= Seq(
+        "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+        "com.typesafe.akka" %% "akka-cluster" % akkaVersion,
+        "com.typesafe.akka" %% "akka-contrib" % akkaVersion,
+        "net.ceedubs" %% "ficus" % "1.0.0"
+      )
+    )
   )
 
   lazy val server = Project(
@@ -54,13 +66,13 @@ object CustomBuild extends Build {
         "com.google.guava" % "guava" % "16.0.1"
       )
     ) ++ Revolver.settings
-  ) dependsOn(common)
+  ) dependsOn(common, akkaCommon)
 
   lazy val client = Project(
     "hippodb-client",
     file("client"),
     settings = buildSettings
-  ) dependsOn(common)
+  ) dependsOn(common, akkaCommon)
 
   lazy val http = Project(
     "hippodb-http",
@@ -73,4 +85,29 @@ object CustomBuild extends Build {
       )
     ) ++ Revolver.settings
   ) dependsOn(client)
+
+  lazy val hbase = Project(
+    "hippodb-hbase-sync",
+    file("hbase-sync"),
+    settings = buildSettings ++ assemblySettings ++ Seq(
+      resolvers ++= Seq(
+        "Cloudera releases" at "https://repository.cloudera.com/artifactory/libs-release",
+        "Concurrent Maven Repo" at "http://conjars.org/repo"
+      ),
+      libraryDependencies ++= Seq(
+        "com.roundeights" %% "hasher" % "1.0.0",
+        "com.twitter" %% "scalding-core" % "0.9.1",
+        "org.apache.hadoop" % "hadoop-core" % "2.0.0-mr1-cdh4.6.0" % "provided",
+        "org.apache.hadoop" % "hadoop-common" % "2.0.0-cdh4.6.0" % "provided",
+        "org.apache.hbase" % "hbase" % "0.94.15-cdh4.6.0"// % "provided"
+      ),
+      mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+        {
+          case PathList("META-INF", _*) => MergeStrategy.discard
+          case _ => MergeStrategy.last
+        }
+      },
+      mainClass in assembly := Some("com.twitter.scalding.Tool")
+    )
+  ) dependsOn(common)
 }
