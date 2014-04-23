@@ -8,7 +8,18 @@ import cascading.scheme.hadoop.SequenceFile
 import org.apache.hadoop.mapred.{ JobConf, OutputCollector, RecordReader, SequenceFileOutputFormat }
 import org.apache.hadoop.io.Text
 
-
+// This is essentially the same as
+//
+//   cascading.scheme.hadoop.SequenceFile
+//
+// but uses Text keys and values instead of Tuple.
+// Moreover, the default cascading implementation
+// assumes any number of fields, and stores an empty
+// key, and the whole tuple as value. Instead, this
+// implementation will only work for pipes of tuples
+// containing exactly two fields: the first to be used
+// as a key, and the other one as value.
+//
 // Only made the necessary modifications to work as sink
 class TextSequenceFile(fields: Fields) extends SequenceFile(fields) {
   override def sinkConfInit(
