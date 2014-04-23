@@ -1,13 +1,25 @@
 package unicredit.hippo.retriever
 
-import org.apache.hadoop.io.{ SequenceFile, MapFile }
+import org.apache.hadoop.io.{ Text, SequenceFile, MapFile }
+import org.apache.hadoop.fs.{ Path, FileUtil }
 import org.apache.hadoop.conf.Configuration
-import org.apache.hadoop.fs.Path
-import org.apache.hadoop.io.Text
 
 
-object Converter {
-  def seq2mapFile(in: String, out: String) = {
+object IO {
+  // Reads a remote directory on HDFS, merging the
+  // files inside it
+  def retrieve(in: String, out: String) = {
+    val conf = new Configuration
+    val input = new Path(in)
+    val output = new Path(out)
+
+    FileUtil.copyMerge(input.getFileSystem(conf), input, output.getFileSystem(conf),
+      output, false, conf, "")
+  }
+
+  // Converts a SequenceFile to a MapFile, thus
+  // sorting it and adding an index
+  def index(in: String, out: String) = {
     val conf = new Configuration
     val input = new Path(in)
     val dir = new Path(out)

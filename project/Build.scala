@@ -20,7 +20,8 @@ object BuildSettings {
       "-language:implicitConversions"
     ),
     resolvers ++= Seq(
-      "RoundEights" at "http://maven.spikemark.net/roundeights"
+      "RoundEights" at "http://maven.spikemark.net/roundeights",
+      "Cloudera" at "https://repository.cloudera.com/artifactory/libs-release"
     )
   )
 }
@@ -92,8 +93,8 @@ object CustomBuild extends Build {
     file("retriever"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-       "org.apache.hadoop" % "hadoop-common" % "2.4.0",
-       "org.apache.hadoop" % "hadoop-hdfs" % "2.4.0",
+       "org.apache.hadoop" % "hadoop-common" % s"2.0.0-cdh$cdhVersion",
+       "org.apache.hadoop" % "hadoop-client" % s"2.0.0-cdh$cdhVersion",
        "com.github.scopt" %% "scopt" % "3.2.0"
       )
     )
@@ -104,7 +105,6 @@ object CustomBuild extends Build {
     file("hbase-sync"),
     settings = buildSettings ++ assemblySettings ++ Seq(
       resolvers ++= Seq(
-        "Cloudera releases" at "https://repository.cloudera.com/artifactory/libs-release",
         "Concurrent Maven Repo" at "http://conjars.org/repo"
       ),
       libraryDependencies ++= Seq(
