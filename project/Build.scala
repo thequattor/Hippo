@@ -98,7 +98,7 @@ object CustomBuild extends Build {
        "com.github.scopt" %% "scopt" % "3.2.0"
       )
     )
-  )
+  ) dependsOn(akkaCommon)
 
   lazy val hbase = Project(
     "hippodb-hbase-sync",
