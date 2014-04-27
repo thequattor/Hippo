@@ -20,6 +20,7 @@ class HBaseSync(args: Args) extends Job(args) {
   val servers = args("servers") split ',' toList
   val table = args("table")
   val quorum = args("quorum")
+  val out = args("output")
 
   val fields = new Fields(columns: _*)
 
@@ -35,7 +36,7 @@ class HBaseSync(args: Args) extends Job(args) {
     columns
   )
   val output = TemplatedTextSequenceFile(
-    basePath = args("output"),
+    basePath = s"$out/$table/",
     template = "%s/shards/%s",
     pathFields = ('server, 'partition),
     fields = ('key, 'value)

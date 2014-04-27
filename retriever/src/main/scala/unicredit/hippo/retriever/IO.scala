@@ -17,6 +17,17 @@ object IO {
       output, false, conf, "")
   }
 
+  // Reads file names from a remote directory on HDFS
+  def listFiles(dir: String) = {
+    val conf = new Configuration
+    val path = new Path(dir)
+    val fs = path.getFileSystem(conf)
+    val iter = fs.listLocatedStatus(path)
+    var names = List.empty[String]
+    while (iter.hasNext) { names ::= iter.next.getPath.getName }
+    names
+  }
+
   // Converts a SequenceFile to a MapFile, thus
   // sorting it and adding an index
   def index(in: String, out: String) = {

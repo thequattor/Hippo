@@ -21,7 +21,9 @@ object Main extends App {
   import system.dispatcher
 
   Parser.parse(args, { config ⇒
-    (downloader ? Download(config.source, config.target)) onComplete { _ ⇒
+    val message = Download(config.source, config.table, config.id, config.target)
+
+    (downloader ? message) onComplete { _ ⇒
       system.shutdown
     }
   })
