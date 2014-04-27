@@ -25,5 +25,5 @@ package object messages {
   case object RefreshNodes
   case object AreYouReady
   case class ReadyState(state: Future[Boolean])
-  case class Download(source: String, table: String, id: String, target: String)
+  case class Download(source: String, target: String, shard: String)
 }

@@ -2,6 +2,7 @@ package unicredit.hippo
 package retriever
 
 import scala.concurrent.duration._
+import scala.concurrent.Future
 
 import akka.actor.{ ActorSystem, Props }
 import akka.pattern.ask
@@ -21,9 +22,15 @@ object Main extends App {
   import system.dispatcher
 
   Parser.parse(args, { config ⇒
-    val message = Download(config.source, config.table, config.id, config.target)
+    val baseDir = s"${ config.source }/${ config.table }/${ config.id }/shards"
+    val shards = IO.listFiles(baseDir)
 
-    (downloader ? message) onComplete { _ ⇒
+    val futures = for {
+      shard <- shards
+      message = Download(baseDir, config.target, shard)
+    } yield downloader ? message
+
+    Future.sequence(futures) onComplete { _ ⇒
       system.shutdown
     }
   })
