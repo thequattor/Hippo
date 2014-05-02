@@ -63,12 +63,10 @@ class HBaseSync(args: Args) extends Job(args) {
     .map(fields -> 'all) { tuple: Tuple =>
       tuple.iterator.toList.asInstanceOf[List[String]]
     }
-    .groupBy('server, 'partition) {
-      _.toList[(String, List[String])](('key, 'all) -> 'fields)
-    }
-    .flatMap('fields -> ('key, 'value)) { xs: List[(String, List[String])] =>
+    .flatMap(('key, 'all) -> ('key, 'value)) { xs: (String, List[String]) =>
+      val (key, fields) = xs
+
       for {
-        (key, fields) <- xs
         (column, value) <- (columns, fields).zipped
         if value != null
       } yield (new Text(joiner.join(key, column)), new Text(value))
