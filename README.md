@@ -58,4 +58,4 @@ Since hippodb-http is based on hippodb-client, and the latter already takes care
 Kudos
 -----
 
-The idea for HippoDB is essentially the same as [ElephantDB](https://github.com/nathanmarz/elephantdb "ElephantDB") from [Nathan Marz](https://github.com/nathanmarz/). Unfortunately the latter project seems underdocumented. HippoDB is so simple thanks to the wonderful Akka framework.
+The idea for HippoDB is essentially the same as [ElephantDB](https://github.com/nathanmarz/elephantdb "ElephantDB") from [Nathan Marz](https://github.com/nathanmarz/). Unfortunately the latter project seems underdocumented. HippoDB is so simple thanks to the wonderful [Akka framework](http://akka.io/ "Akka").
