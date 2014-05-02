@@ -49,7 +49,7 @@ class HBaseSync(args: Args) extends Job(args) {
       tuple.iterator.toList.asInstanceOf[List[String]]
     }
     .groupBy('server, 'partition) {
-      _.toList[(String, Tuple)](('key, 'all) -> 'fields)
+      _.toList[(String, List[String])](('key, 'all) -> 'fields)
     }
     .flatMap('fields -> ('key, 'value)) { xs: List[(String, List[String])] =>
       for {
