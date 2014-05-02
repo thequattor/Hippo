@@ -46,7 +46,7 @@ class HBaseSync(args: Args) extends Job(args) {
   val input = HBaseSource(
     table,
     quorum,
-    "key",
+    "id",
     List.fill(columns.length)(columnFamily),
     columns
   )
@@ -58,12 +58,12 @@ class HBaseSync(args: Args) extends Job(args) {
   )
 
   input.readStrings
-    .flatMap('key -> 'server) { key: String => shards(key, servers, replicas) }
-    .map('key -> 'partition) { key: String => shard(key, partitions) }
+    .flatMap('id -> 'server) { id: String => shards(id, servers, replicas) }
+    .map('id -> 'partition) { id: String => shard(id, partitions) }
     .map(fields -> 'all) { tuple: Tuple =>
       tuple.iterator.toList.asInstanceOf[List[String]]
     }
-    .flatMap(('key, 'all) -> ('key, 'value)) { xs: (String, List[String]) =>
+    .flatMap(('id, 'all) -> ('key, 'value)) { xs: (String, List[String]) =>
       val (key, fields) = xs
 
       for {
