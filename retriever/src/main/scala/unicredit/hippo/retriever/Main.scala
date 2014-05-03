@@ -22,6 +22,7 @@ import scala.concurrent.Future
 import akka.actor.{ ActorSystem, Props }
 import akka.pattern.ask
 import akka.util.Timeout
+import akka.routing.{ SmallestMailboxPool, DefaultResizer }
 
 import actors.Downloader
 import messages.Download
@@ -32,8 +33,9 @@ object Main extends App {
 
   Parser.parse(args, { config ⇒
     val system = ActorSystem("hippo-retriever")
+    val resizer = DefaultResizer(lowerBound = 2, upperBound = 16)
     val downloader = system.actorOf(
-      Props[Downloader],
+      SmallestMailboxPool(5, Some(resizer)).props(Props[Downloader]),
       name = "downloader"
     )
     import system.dispatcher
