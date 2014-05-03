@@ -29,20 +29,22 @@ import messages.Download
 
 object Main extends App {
   implicit val timeout = Timeout(10 minutes)
-  val system = ActorSystem("hippo-retriever")
-  val downloader = system.actorOf(
-    Props[Downloader],
-    name = "downloader"
-  )
-  import system.dispatcher
 
   Parser.parse(args, { config ⇒
-    val baseDir = s"${ config.source }/${ config.table }/${ config.id }/shards"
-    val shards = IO.listFiles(baseDir)
+    val system = ActorSystem("hippo-retriever")
+    val downloader = system.actorOf(
+      Props[Downloader],
+      name = "downloader"
+    )
+    import system.dispatcher
+    val source = s"${ config.source }/${ config.version }/${ config.table }/${ config.id }/shards"
+    val target = s"${ config.target }/${ config.version }/${ config.table }"
+    val shards = IO.listFiles(source)
+    IO.mkdir(target)
 
     val futures = for {
       shard <- shards
-      message = Download(baseDir, config.target, shard)
+      message = Download(source, target, shard)
     } yield downloader ? message
 
     Future.sequence(futures) onComplete { _ ⇒

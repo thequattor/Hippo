@@ -32,6 +32,24 @@ object IO {
       output, false, conf, "")
   }
 
+  // Creates a directory, either locally or on HDFS
+  def mkdir(dir: String) = {
+    val conf = new Configuration
+    val path = new Path(dir)
+    val fs = path.getFileSystem(conf)
+
+    fs.mkdirs(path)
+  }
+
+  // Removes a file, either locally or on HDFS
+  def delete(file: String) = {
+    val conf = new Configuration
+    val path = new Path(file)
+    val fs = path.getFileSystem(conf)
+
+    fs.delete(path, false) // not recursive
+  }
+
   // Reads file names from a remote directory on HDFS
   def listFiles(dir: String) = {
     val conf = new Configuration

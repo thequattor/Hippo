@@ -27,6 +27,7 @@ class Downloader extends Actor with ActorLogging {
     case Download(source, target, shard) ⇒
       IO.retrieve(s"$source/$shard", s"$target/temp_$shard")
       IO.index(s"$target/temp_$shard", s"$target/shards/$shard")
+      IO.delete(s"$target/temp_$shard")
       // confirm we're done
       sender ! ()
   }

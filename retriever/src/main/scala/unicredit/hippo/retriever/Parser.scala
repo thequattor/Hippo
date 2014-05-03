@@ -23,6 +23,7 @@ object Parser {
     source: String = "",
     table: String = "",
     id: String = "",
+    version: String = "",
     target: String = ""
   )
 
@@ -31,6 +32,9 @@ object Parser {
     opt[String]('s', "source") required() valueName("<path>") action { (x, c) =>
       c.copy(source = x)
     } text("the directory to retrieve from HDFS")
+    opt[String]('v', "version") required() valueName("<version>") action { (x, c) =>
+      c.copy(version = x)
+    } text("the version of the table to retrieve")
     opt[String]('p', "table") required() valueName("<name>") action { (x, c) =>
       c.copy(table = x)
     } text("the table to retrieve")
