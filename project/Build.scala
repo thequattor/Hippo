@@ -31,7 +31,7 @@ object BuildSettings {
     licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     version := "1.0",
     scalaVersion := "2.10.3",
-    scmInfo := Some(ScmInfo(url("https://github.com/unicredit/hippodb"),"git://github.com/unicredit/hippodb.git")),    
+    scmInfo := Some(ScmInfo(url("https://github.com/unicredit/hippodb"),"git://github.com/unicredit/hippodb.git")),
     scalacOptions ++= Seq(
       "-deprecation",
       "-feature",
@@ -42,7 +42,7 @@ object BuildSettings {
       "RoundEights" at "http://maven.spikemark.net/roundeights",
       "Cloudera" at "https://repository.cloudera.com/artifactory/libs-release"
     )
-  )
+  ) ++ net.virtualvoid.sbt.graph.Plugin.graphSettings
 }
 
 object CustomBuild extends Build {
@@ -112,12 +112,13 @@ object CustomBuild extends Build {
     file("retriever"),
     settings = buildSettings ++ Seq(
       libraryDependencies ++= Seq(
-       "org.apache.hadoop" % "hadoop-common" % s"2.0.0-cdh$cdhVersion",
-       "org.apache.hadoop" % "hadoop-client" % s"2.0.0-cdh$cdhVersion",
-       "com.github.scopt" %% "scopt" % "3.2.0"
+        "org.apache.hadoop" % "hadoop-common" % s"2.0.0-cdh$cdhVersion",
+        "org.apache.hadoop" % "hadoop-client" % s"2.0.0-cdh$cdhVersion",
+        "com.typesafe.akka" %% "akka-actor" % akkaVersion,
+        "com.github.scopt" %% "scopt" % "3.2.0"
       )
     )
-  ) dependsOn(akkaCommon)
+  )
 
   lazy val hbase = Project(
     "hippodb-hbase-sync",

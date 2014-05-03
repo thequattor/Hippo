@@ -40,5 +40,4 @@ package object messages {
   case object RefreshNodes
   case object AreYouReady
   case class ReadyState(state: Future[Boolean])
-  case class Download(source: String, target: String, shard: String)
 }
