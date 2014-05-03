@@ -6,7 +6,7 @@ HippoDB is a distributed database meant to serve data which lives in Hadoop clus
 * data is *never* written. Instead dumps for HippoDB are created externally and an atomic switch is made when a new version is available.
 * the *only* pattern of access to resident data is **by key**, although there is support for splitting data relative to a single key into columns.
 
-This restrictions allow to write a tool which has very few moving parts, and so it is extremely simple, both in terms of logic and in terms of lines of code. Hence, although very young, HippoDB is also very robust.
+This restrictions allow to write a tool which has very few moving parts, and so it is extremely simple, both in terms of logic and in terms of lines of code (830 lines, excluding blanks and comments). Hence, although very young, HippoDB is also very robust.
 
 It also allows to switch back to a past version, in the event that the last version deployed should contain erroneous data.
 
