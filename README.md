@@ -13,7 +13,7 @@ It also allows to switch back to a past version, in the event that the last vers
 Workflow
 --------
 
-A typical workflow would have HippoDB work in tandem with another more sophisticated store such as **HBase**. Data comes in HBase and possibly batch jobs (for instance map-reduce) are ran.
+A typical workflow would have HippoDB work in tandem with another more sophisticated store such as **HBase**. Data comes in HBase and possibly batch jobs (for instance map-reduce) are run.
 
 Periodically - say every two hours - relevant data is dumped to HippoDB for serving to frontend applications. Once it is ready, a command is issued to HippoDB, to instantaneously switch version. In case something went wrong, a rollback can be made with no downtime.
 
@@ -54,6 +54,95 @@ HippoDB consists of a few separate subprojects. This does not mean it is necessa
 Hence a typical deployment would have hippodb-server on each serving machine and hippodb-client used as a library from client applications. Peridocally, hippodb-hbase-sync can be run to read data from HBase and this data can be made ready on the servers using hippodb-retriever. Finally, one or more instances of hippodb-http can be deployed at will.
 
 Since hippodb-http is based on hippodb-client, and the latter already takes care of load balancing, there should be no need to deploy hippodb-http to more that one machine and load balance between them. The workload done by hippodb-http is minimal and there will probably be no gain in having another server in front of it.
+
+How to run
+----------
+
+There is no official deployment yet, so everything has to be run from `sbt`. The whole process will be streamlined in the future.
+
+Servers are assumed to be identified by id. Any string will do, as long as it is used consistently.
+
+All commands are assumed to be run from the directory containing this README. On each involved machine, one has to clone the HippoDB project.
+
+## Step 1
+
+Compile the MapReduce job with the command
+
+    sbt hippodb-hbase-sync/assembly
+
+This result in a jar file for the job under `hbase-sync/target/scala-2.10`
+
+## Step 2
+
+For every HBase table that you want to dump, launch the job with a command similar to
+
+    hadoop jar hbase-sync/target/scala-2.10//hippodb-hbase-sync-assembly-1.0.jar \
+      --table <table> \
+      --cf <column-family> \
+      --columns <col1,col2,col3> \
+      --replicas <number-of-replicas> \
+      --partitions <number-of-partitions> \
+      --servers <server1,server2,server3> \
+      --version <version-name> \
+      --quorum <zookeeper-quorum> \
+      --output <output-path>
+
+The meaning of the parameters is as follows:
+
+* `table` and `cf` are the same as in HBase; for now HippoDB only supports a single column family
+* `columns`: a comma-separated list of columns to be dumped. This will become optional: if the list is missing, the whole column family will be dumped
+* `replicas`: the number of times data should be replicated
+* `partitions`: the number of shards to use locally on each server. `12` is a good starting point - increase it for big tables. This should be computed by HippoDB based on the amount of data automatically.
+* `servers`: a comma-separated list of identifiers for the servers that will serve the data
+* `version`: any string will do; used to tell apart different versions of the same table
+* `quorum`: the quorum for ZooKeeper. This should also become unnecessary.
+* `output`: the path on HDFS where to store the output data.
+
+If the job completes succesfully, data will be found under `<output>/<version>/<table>`, already split between servers.
+
+## Step 3
+
+Servers have to retrieve data locally. To do so, launch a command like
+
+    sbt hippodb-retriever/run --source <source> --table <table>
+      --version <version> --id <id> --target <target>
+
+The meaning of the parameters is as follows:
+
+* `table` and `version` are as in Step 2
+* `id` is the local id of the server on which the command is run
+* `source` is the directory on HDFS where data is to be found. It corresponds to `output` from Step 2, but should be in the form `hdfs://<nameserver>:<port>/<path>`. The port for the nameserver is usually `8020`.
+* `target` is the local directory where data should be stored.
+
+## Step 4
+
+Configure and start the servers locally. Configuration is done by
+
+    cp server/src/main/resources/application-local-example.conf \
+      server/src/main/resources/application-local.conf
+
+and customizing the values in that file. In particular, set the key `akka.cluster.seed-nodes`. Servers will start and try to join the cluster having at least one of this nodes. You can put a single server address there, or even the list of addresses of the whole cluster. Just make sure that the seed nodes are started first. Then, the server is started with
+
+    sbt hippodb-server/run
+
+Servers should recognize each other and join the cluster.
+
+## Step 5
+
+Now the data is available. The easiest thing to check that everything is ok is to start the HTTP server. This can be started on any machine - whether it is part of the cluster or not.
+
+To configure the server, do
+
+    cp http/src/main/resources/application-local-example.conf \
+      http/src/main/resources/application-local.conf
+
+and customize the values in that file. In particular, configure the key `hippo.servers` to point at one or more servers in the cluster, as in Step 4. Then the HTTP server is started with
+
+    sbt hippodb-http/run
+
+To check that everything is ok, try to navigate to `http://<machine>:<port>/siblings` to see the list of servers in the cluster. Here `machine` and `port` are as configured in the local configuration file.
+
+Then queries can be issued with to `http://<machine>:<port>/query?table=<table>&key=<key1>&key=<key2>&...&column=<column1>&column=<column2>...`.
 
 Kudos
 -----
