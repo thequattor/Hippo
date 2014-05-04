@@ -64,7 +64,7 @@ Servers are assumed to be identified by id. Any string will do, as long as it is
 
 All commands are assumed to be run from the directory containing this README. On each involved machine, one has to clone the HippoDB project.
 
-## Step 1
+### Step 1
 
 Compile the MapReduce job with the command
 
@@ -72,11 +72,11 @@ Compile the MapReduce job with the command
 
 This result in a jar file for the job under `hbase-sync/target/scala-2.10`
 
-## Step 2
+### Step 2
 
 For every HBase table that you want to dump, launch the job with a command similar to
 
-    hadoop jar hbase-sync/target/scala-2.10//hippodb-hbase-sync-assembly-1.0.jar \
+    hadoop jar hbase-sync/target/scala-2.10/hippodb-hbase-sync-assembly-1.0.jar \
       --table <table> \
       --cf <column-family> \
       --columns <col1,col2,col3> \
@@ -100,9 +100,9 @@ The meaning of the parameters is as follows:
 
 If the job completes succesfully, data will be found under `<output>/<version>/<table>`, already split between servers.
 
-## Step 3
+### Step 3
 
-Servers have to retrieve data locally. To do so, launch a command like
+Servers have to retrieve data locally and index it. To do so, launch a command like
 
     sbt hippodb-retriever/run --source <source> --table <table>
       --version <version> --id <id> --target <target>
@@ -114,7 +114,7 @@ The meaning of the parameters is as follows:
 * `source` is the directory on HDFS where data is to be found. It corresponds to `output` from Step 2, but should be in the form `hdfs://<nameserver>:<port>/<path>`. The port for the nameserver is usually `8020`.
 * `target` is the local directory where data should be stored.
 
-## Step 4
+### Step 4
 
 Configure and start the servers locally. Configuration is done by
 
@@ -127,7 +127,7 @@ and customizing the values in that file. In particular, set the key `akka.cluste
 
 Servers should recognize each other and join the cluster.
 
-## Step 5
+### Step 5
 
 Now the data is available. The easiest thing to check that everything is ok is to start the HTTP server. This can be started on any machine - whether it is part of the cluster or not.
 
@@ -142,7 +142,7 @@ and customize the values in that file. In particular, configure the key `hippo.s
 
 To check that everything is ok, try to navigate to `http://<machine>:<port>/siblings` to see the list of servers in the cluster. Here `machine` and `port` are as configured in the local configuration file.
 
-Then queries can be issued with to `http://<machine>:<port>/query?table=<table>&key=<key1>&key=<key2>&...&column=<column1>&column=<column2>...`.
+Queries are always multiget queries, for a list of keys and columns, and can be issued to `http://<machine>:<port>/query?table=<table>&key=<key1>&key=<key2>&...&column=<column1>&column=<column2>...`.
 
 Kudos
 -----
