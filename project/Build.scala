@@ -29,7 +29,7 @@ object BuildSettings {
     organizationName := "UniCredit S.p.A.",
     organizationHomepage := Some(new URL("https://www.unicreditgroup.eu")),
     licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-    version := "1.0",
+    version := "0.1.0",
     scalaVersion := "2.10.3",
     scmInfo := Some(ScmInfo(url("https://github.com/unicredit/hippodb"),"git://github.com/unicredit/hippodb.git")),
     scalacOptions ++= Seq(
