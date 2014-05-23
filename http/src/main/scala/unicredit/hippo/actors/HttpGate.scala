@@ -25,13 +25,13 @@ import spray.routing.HttpService
 import spray.http.HttpMethods._
 import spray.httpx.Json4sJacksonSupport
 import org.json4s.NoTypeHints
-import org.json4s.jackson.JsonMethods._
 import org.json4s.JsonDSL._
+import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization.formats
 import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.FicusConfig._
 
-import messages.{ Request, Result, GetSiblings, Siblings }
+import messages._
 
 
 object Support extends Json4sJacksonSupport {
@@ -65,6 +65,20 @@ class HttpGate(client: ActorRef) extends Actor with ActorLogging with HttpServic
       path("nodes") {
         complete {
           (client ? GetSiblings).mapTo[Map[String, ActorRef]] map { x ⇒ render(x.keySet.toList) }
+        }
+      } ~
+      path("info") {
+        complete {
+          (client ? GetInfo).mapTo[Info] map { case Info(nodes, timeout, cacheSize, replicas) ⇒
+            val result = Map(
+              "nodes" -> render(nodes.keySet.toList),
+              "timeout" -> render(s"${ timeout.toMillis } ms"),
+              "cache_size" -> render(cacheSize),
+              "replicas" -> render(replicas)
+            )
+
+            render(result)
+          }
         }
       }
     }

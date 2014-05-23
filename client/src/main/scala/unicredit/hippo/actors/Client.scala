@@ -53,7 +53,7 @@ class Client(contacts: Seq[String]) extends Actor with ActorLogging {
       sender ! ReadyState(ready.future)
     case GetSiblings ⇒
       sender ! nodes
-    case m: Request ⇒
+    case m @ (_: Request | GetInfo) ⇒
       val ids = shards(m.toString, nodes.keySet.toList, 2)
       val actors = ids map nodes
       val result = (actors.head ? m) orElse {

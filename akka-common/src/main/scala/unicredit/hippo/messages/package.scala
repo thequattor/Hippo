@@ -16,6 +16,7 @@
 package unicredit.hippo
 
 import scala.concurrent.Future
+import scala.concurrent.duration.FiniteDuration
 
 import akka.actor.ActorRef
 
@@ -37,6 +38,13 @@ package object messages {
   case class Switch(version: String)
   case object GetSiblings
   case class Siblings(nodes: Map[String, ActorRef])
+  case object GetInfo
+  case class Info(
+    nodes: Map[String, ActorRef],
+    timeout: FiniteDuration,
+    cacheSize: Int,
+    replicas: Int
+  )
   case object RefreshNodes
   case object AreYouReady
   case class ReadyState(state: Future[Boolean])

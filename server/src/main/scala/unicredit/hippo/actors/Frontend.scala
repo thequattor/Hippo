@@ -45,7 +45,8 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
   // times out. 95% is here 19/20 because
   //   FiniteDuration#*(factor: Double)
   // returns Duration and not FiniteDuration
-  implicit val timeout = Timeout(duration * 19 div (20 * replicas))
+  private val timeoutDuration = duration * 19 div (20 * replicas)
+  implicit val timeout = Timeout(timeoutDuration)
   import context.dispatcher
 
   val cluster = Cluster(context.system)
@@ -127,6 +128,8 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       cache.invalidateAll
     case GetSiblings ⇒
       sender ! Siblings(siblings)
+    case GetInfo ⇒
+      sender ! Info(siblings, timeoutDuration, cacheSize, replicas)
     case x ⇒ log.info(s"Ignored message $x")
   }
 
