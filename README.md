@@ -1,6 +1,8 @@
 HippoDB
 ========
 
+![logo](https://raw.githubusercontent.com/unicredit/hippodb/master/logo.png)
+
 HippoDB is a distributed database meant to serve data which lives in Hadoop clusters (but not only) to frontend applications. In order to keep things as simple and as robust as possible, HippoDB is a read-only key-value store. This means that:
 
 * data is *never* written. Instead dumps for HippoDB are created externally and an atomic switch is made when a new version is available.
