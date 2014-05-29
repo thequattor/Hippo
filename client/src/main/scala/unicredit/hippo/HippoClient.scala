@@ -53,5 +53,7 @@ class HippoClient(host: String, port: Int) {
     (client ? GetSiblings).mapTo[Siblings] onSuccess PartialFunction(callback)
   def info(callback: Info ⇒ Unit) =
     (client ? GetInfo).mapTo[Info] onSuccess PartialFunction(callback)
+  def switch(version: SwitchAll) =
+    (client ! version)
   def close = system.shutdown
 }

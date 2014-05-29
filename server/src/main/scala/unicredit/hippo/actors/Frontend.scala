@@ -123,6 +123,8 @@ class Frontend(retriever: ActorRef) extends Actor with ActorLogging {
       cache get m pipeTo sender
     case m: Retrieve ⇒
       retriever ? m pipeTo sender
+    case SwitchAll(version) ⇒
+      siblings.values foreach (_ ! Switch(version))
     case m: Switch ⇒
       retriever ! m
       cache.invalidateAll

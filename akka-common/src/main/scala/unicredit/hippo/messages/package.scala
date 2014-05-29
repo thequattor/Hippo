@@ -36,6 +36,7 @@ package object messages {
   )
   case class Result(content: Map[String, Map[String, String]])
   case class Switch(version: String)
+  case class SwitchAll(version: String)
   case object GetSiblings
   case class Siblings(nodes: Map[String, ActorRef])
   case object GetInfo

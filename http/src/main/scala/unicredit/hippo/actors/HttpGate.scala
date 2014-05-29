@@ -81,6 +81,15 @@ class HttpGate(client: ActorRef) extends Actor with ActorLogging with HttpServic
           }
         }
       }
+    } ~
+    post {
+      path("switch") {
+        entity(as[SwitchAll]) { switch ⇒
+          client ! switch
+
+          complete("ok")
+        }
+      }
     }
   }
 }

@@ -59,7 +59,7 @@ class Client(contacts: Seq[String]) extends Actor with ActorLogging {
       sender ! ReadyState(ready.future)
     case GetSiblings ⇒
       sender ! nodes
-    case m @ (_: Request | GetInfo) ⇒
+    case m @ (_: Request | _: SwitchAll | GetInfo) ⇒
       val ids = shards(m.toString, nodes.keySet.toList, 2)
       val actors = ids map nodes
       val timeouts = generateTimeouts(2)
